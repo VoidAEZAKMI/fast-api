@@ -1,11 +1,9 @@
 from fastapi import APIRouter, Query, Body
-from pydantic import BaseModel
+
+from api.dependencies import PaginationDep
+from schemas.hotels import Hotels, HotelsPATCH
 
 router = APIRouter(prefix="/hotels", tags=["Отели"])
-
-# @router.get("/")
-# def func():
-#     return "Hello world"
 
 
 hotels = [
@@ -16,17 +14,15 @@ hotels = [
     {"id": 5, "title": "Берлин","name": "berlin"},
 ]
 
-class Hotels(BaseModel):
-    title: str
-    name: str
+
 
 
 @router.get("")
 def get_hotels(
+    pagination: PaginationDep,
     id:    int  | None = Query(None, description="Id"),
     title: str | None = Query(None, description="Название отеля"),
-    page:      int      = Query(1,  ge=1, description="Номер страницы (по умолчанию 1)"),
-    per_page:  int      = Query(3,  ge=1, description="Записей на странице (по умолчанию 3)"),
+    
 ):
 
     # Фильтрация
@@ -36,26 +32,26 @@ def get_hotels(
     ]
 
     # Пагинация
-    start = (page - 1) * per_page
-    end   = start + per_page
+    start = (pagination.page - 1) * pagination.per_page
+    end   = start + pagination.per_page
     items = filtered[start:end]
 
     return {
         "total": len(filtered),   
-        "page": page,
-        "per_page": per_page,
+        "page": pagination.page,
+        "per_page": pagination.per_page,
         "items": items
     }
 
 
-# @router.post("")
-# def create_hotel(hotel_data: Hotels):
-#     hotels.append({
-#         "id": hotels[-1]["id"] + 1,
-#         "title": hotel_data.title,
-#         "name": hotel_data.name,
-#     })
-#     return {"status": "OK"}
+@router.post("")
+def create_hotel(hotel_data: Hotels):
+    hotels.append({
+        "id": hotels[-1]["id"] + 1,
+        "title": hotel_data.title,
+        "name": hotel_data.name,
+    })
+    return {"status": "OK"}
 
 
 @router.put("/{hotel_id}")

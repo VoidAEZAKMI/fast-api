@@ -3,3 +3,5 @@ venv/
 .vscode/
 *.pyc
 .DS_Store
+.idea/
+.env
