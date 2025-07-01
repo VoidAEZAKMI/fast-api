@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy import String
 
-from src.database import Base
+from database import Base
 
 
 class HotelsOrm(Base):
@@ -11,3 +11,4 @@ class HotelsOrm(Base):
     title: Mapped[str] = mapped_column(String(100))
     location: Mapped[str]
 
+    

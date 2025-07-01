@@ -1,9 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 class Hotels(BaseModel):
     title: str
-    name: str
+    location: str
 
 class HotelsPATCH(BaseModel):
-    pass
+    title: str | None = Field(None)
+    location: str | None = Field(None)
+
 
