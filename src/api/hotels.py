@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Query, Body
-from sqlalchemy import insert
-from database import new_session
+from sqlalchemy import insert, select 
+from database import async_session_maker
 
 from api.dependencies import PaginationDep
 from models.hotels import HotelsOrm
@@ -9,42 +9,26 @@ from schemas.hotels import Hotels, HotelsPATCH
 router = APIRouter(prefix="/hotels", tags=["Отели"])
 
 
-hotels = [
-    {"id": 1, "title": "Сочи",  "name": "sochi"},
-    {"id": 2, "title": "Дубай", "name": "dubai"},
-    {"id": 3, "title": "Париж", "name": "paris"},
-    {"id": 4, "title": "Лондон","name": "london"},
-    {"id": 5, "title": "Берлин","name": "berlin"},
-]
-
-
-
-
 @router.get("")
-def get_hotels(
+async def get_hotels(
     pagination: PaginationDep,
     id:    int  | None = Query(None, description="Id"),
     title: str | None = Query(None, description="Название отеля"),
     
 ):
+    async with async_session_maker() as session:
+        query = select(HotelsOrm)
+        result = await session.execute(query)
 
-    # Фильтрация
-    filtered = [
-        h for h in hotels
-        if (id is None or h["id"] == id) and (title is None or h["title"] == title)
-    ]
+        hotels = result.scalars().all()
+        print(type(hotels), hotels)
+        return hotels
 
-    # Пагинация
-    start = (pagination.page - 1) * pagination.per_page
-    end   = start + pagination.per_page
-    items = filtered[start:end]
 
-    return {
-        "total": len(filtered),   
-        "page": pagination.page,
-        "per_page": pagination.per_page,
-        "items": items
-    }
+
+     
+    #  if pagination.page and pagination.per_page:
+    #       return hotels_[pagination.per_page * (pagination.page-1):][:pagination.per_page]
 
 
 @router.post("")
@@ -64,7 +48,7 @@ async def create_hotel(hotel_data: Hotels = Body(openapi_examples={
                 },
             },
         })):
-        async with new_session() as session:
+        async with async_session_maker() as session:
             add_hotel_stmt = insert(HotelsOrm).values(**hotel_data.model_dump())
             await session.execute(add_hotel_stmt)
             await session.commit()
