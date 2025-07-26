@@ -1,4 +1,5 @@
-from sqlalchemy import select 
+from sqlalchemy import select, insert 
+from pydantic import BaseModel
 
 class BaseRepository:
     model: None
@@ -6,7 +7,7 @@ class BaseRepository:
         self.session = session
 
 
-    async def get_all(self):
+    async def get_all(self, *args, **kwargs):
         query = select(self.model)
         result = await self.session.execute(query)
         return result.scalars().all()
@@ -16,5 +17,10 @@ class BaseRepository:
         query = select(self.model).filter_by(**filter_by)
         result = await self.session.execute(query)
         return result.scalars().one_or_none()
-             
+    
+
+    async def add (self, data: BaseModel):
+        add_data_smt = insert(self.model).values(**data.model_dump()).returning(self.model)
+        result = await self.session.execute(add_data_smt)
+        return result.scalars().one()     
 
