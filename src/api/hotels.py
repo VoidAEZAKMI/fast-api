@@ -1,9 +1,7 @@
 from fastapi import APIRouter, Query, Body
-from sqlalchemy import insert, select, func, literal_column
 from database import async_session_maker
 
 from api.dependencies import PaginationDep
-from models.hotels import HotelsOrm
 from repositories.hotels import HotelsRepository
 from schemas.hotels import Hotels, HotelsPATCH
 
@@ -26,6 +24,14 @@ async def get_hotels(
             limit=per_page, 
             offset=per_page * (pagination.page - 1)
         )
+    
+@router.get("/{hotel_id}")
+async def get_hotel(hotel_id: int):
+    async with async_session_maker() as session:
+        res = await HotelsRepository(session).get_one_or_none(id=hotel_id)
+        await session.commit()
+
+    return {"status": "OK", "data": res}
 
 
 @router.post("")
@@ -53,10 +59,11 @@ async def create_hotel(hotel_data: Hotels = Body(openapi_examples={
 
 
 @router.put("/{hotel_id}")
-def edit_hotel(hotel_id: int, hotel_data: Hotels):
-    hotel = [h for h in hotels if h["id"] == hotel_id][0]
-    hotel["title"] = hotel_data.title
-    hotel["name"]  = hotel_data.name
+async def edit_hotel(hotel_id: int, hotel_data: Hotels):
+    async with async_session_maker() as session:
+        await HotelsRepository(session).edit(hotel_data, id=hotel_id)
+        await session.commit()
+
     return {"status": "OK"}
 
 
@@ -65,21 +72,20 @@ def edit_hotel(hotel_id: int, hotel_data: Hotels):
     summary="Частичное обновление данных об отеле",
     description="<h1>Тут мы частично обновляем данные об отеле: можно отправить name, а можно title</h1>",
 )
-def partially_edit_hotel(
+async def partially_edit_hotel(
     hotel_id: int,
-    title: str | None = Body(None),
-    name:  str | None = Body(None),
+    hotel_data: HotelsPATCH
 ):
-    hotel = [h for h in hotels if h["id"] == hotel_id][0]
-    if title:
-        hotel["title"] = title
-    if name:
-        hotel["name"] = name
+    async with async_session_maker() as session:
+        await HotelsRepository(session).edit(hotel_data, exclude_unset=True, id=hotel_id)
+        await session.commit()
+
     return {"status": "OK"}
 
 
 @router.delete("/{hotel_id}")
-def delete_hotel(hotel_id: int):
-    global hotels
-    hotels = [h for h in hotels if h["id"] != hotel_id]
+async def delete_hotel(hotel_id: int):
+    async with async_session_maker() as session:
+        await HotelsRepository(session).delete(id=hotel_id)
+        await session.commit()
     return {"status": "OK"}
