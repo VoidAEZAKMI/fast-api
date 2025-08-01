@@ -1,7 +1,7 @@
 from sqlalchemy import insert, select, func, literal_column
-from models.hotels import HotelsOrm
-from repositories.base import BaseRepository
-from schemas.hotels import Hotels
+from src.models.hotels import HotelsOrm
+from src.repositories.base import BaseRepository
+from src.schemas.hotels import Hotels
 
 
 class HotelsRepository(BaseRepository):
