@@ -25,14 +25,14 @@ class BaseRepository:
         if model is None:
             return None
         
-        return self.schema.model_validate(model, rom_attributes=True)
+        return self.schema.model_validate(model, from_attributes=True)
     
 
     async def add (self, data: BaseModel):
         add_data_smt = insert(self.model).values(**data.model_dump()).returning(self.model)
         result = await self.session.execute(add_data_smt)
         model = result.scalars().one()
-        return self.schema.model_validate(model, rom_attributes=True)     
+        return self.schema.model_validate(model, from_attributes=True)
 
     async def edit(self, data: BaseModel, exclude_unset: bool = False, **filter_by) -> None:
         update_stmt = update(self.model).filter_by(**filter_by).values(**data.model_dump(exclude_unset=exclude_unset))
