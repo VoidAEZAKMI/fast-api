@@ -8,9 +8,6 @@ import uvicorn
 from src.api.hotels import router as router_hotels
 
 
-
-
-
 app = FastAPI()
 
 app.include_router(router_hotels)
